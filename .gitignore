@@ -1,0 +1,116 @@
+
+# Node modules
+node_modules/
+**/node_modules/
+
+# Build / output
+dist/
+build/
+.out/
+.output/
+public/dist/
+
+# Vite cache / dev artifacts
+.vite/
+.vitepress/dist
+.cache/
+.cache-vite/
+.parcel-cache/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+pnpm-store.json
+*.log
+
+# Env / secrets — keep example files
+.env
+.env.local
+.env.*.local
+.env.*.local.*
+!.env.example
+!.env*.example
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+Icon?
+$RECYCLE.BIN/
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.psess
+*.vsp
+*.user
+*.userosscache
+*.sublime-workspace
+*.sublime-project
+
+# JetBrains
+*.iml
+.idea/
+
+# Temporary / caches
+tmp/
+temp/
+*.tmp
+*.temp
+.cache/
+
+# Testing / coverage
+coverage/
+.nyc_output/
+jest.cache
+*.lcov
+playwright-report/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Lock/backups (keep official lockfiles committed)
+package-lock.json.old
+yarn.lock.*.tmp
+
+# Service / runtime artifacts
+pids/
+*.pid
+*.seed
+*.pid.lock
+pm2.pid
+pm2.log
+
+
+
+# Misc
+.sass-cache
+.report.*
+*.orig
+*.backup
+*~ 
+*.swp
+.~*
+
+# Coverage / reports from CI or local
+reports/
+
+# OneDrive / sync artifacts
+~$*
+*.cloud
+*.lnk
+
+# Local build artifacts (project-specific)
+dist-ssr/
+build/
+
+# Ignore frontend-specific folders that may be generated
+public/build/
+storybook-static/
+

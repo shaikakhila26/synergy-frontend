@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom cursor labels for y-prosemirror-tip-tap */
+span[data-y-cursor-user] {
+  border-radius: 7px;
+  color: white;
+  padding: 1px 8px 2px 8px;
+  font-weight: bold;
+  font-size: 0.89rem;
+  margin-top: -10px;
+  margin-left: 2px;
+  pointer-events: none;
+  transition: background 0.2s;
+}
