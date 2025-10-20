@@ -4,6 +4,7 @@ import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { supabase } from "../../supabaseClient";
 import { useAuth } from "../../AuthProvider.jsx";
+import { ySyncPlugin, yCursorPlugin, yUndoPlugin } from "y-prosemirror";
 
 // TipTap extensions
 import StarterKit from "@tiptap/starter-kit";
@@ -107,67 +108,74 @@ export default function DocumentEditor({ userName = "Anonymous" }) {
     },
   });
 
-  // Yjs collaborative setup
   useEffect(() => {
-    if (!selectedDocument?.id || !editor) return;
-    if (providerRef.current) {
-      providerRef.current.disconnect();
-      ydocRef.current.destroy && ydocRef.current.destroy();
-    }
-    const ydoc = new Y.Doc();
-    ydocRef.current = ydoc;
-    const provider = new WebsocketProvider(
-      "wss://synergy-backend-6nv1.onrender.com",  
-      selectedDocument.id,
-      ydoc
-    );
-    providerRef.current = provider;
-    const yXmlFragment = ydoc.getXmlFragment("tiptap");
-    import("y-prosemirror").then(({ ySyncPlugin, yCursorPlugin, yUndoPlugin }) => {
-      editor.registerPlugin(ySyncPlugin(yXmlFragment));
-      editor.registerPlugin(yCursorPlugin(provider.awareness));
-      editor.registerPlugin(yUndoPlugin());
-    });
-    (async () => {
-      const { data } = await supabase
-        .from("documents")
-        .select("snapshot")
-        .eq("id", selectedDocument.id)
-        .single();
-      let snapshotUint8 = null;
-      if (data?.snapshot) {
-        if (data.snapshot instanceof Uint8Array) snapshotUint8 = data.snapshot;
-        else if (Array.isArray(data.snapshot)) snapshotUint8 = new Uint8Array(data.snapshot);
-        else if (typeof data.snapshot === "string") {
-          const hex = data.snapshot.startsWith("\\x")
-            ? data.snapshot.slice(2)
-            : data.snapshot;
-          snapshotUint8 = new Uint8Array(hex.match(/.{1,2}/g).map(b => parseInt(b, 16)));
-        }
-        try { Y.applyUpdate(ydoc, snapshotUint8); }
-        catch {
-          if (selectedDocument.content) editor.commands.setContent(selectedDocument.content);
-        }
-      } else if (selectedDocument.content) editor.commands.setContent(selectedDocument.content);
-    })();
-    // Awareness: Track users
-    const color = getRandomColor();
-    provider.awareness.setLocalStateField("user", { name: userName, color });
-    const updateCollaborators = () => {
-      const users = Array.from(provider.awareness.getStates().values())
-        .map((s) => s.user)
-        .filter(Boolean);
-      setCollaborators(users);
-    };
-    provider.awareness.on("update", updateCollaborators);
-    updateCollaborators();
-    return () => {
-      provider.disconnect();
-      ydoc.destroy();
-      providerRef.current = null;
-      ydocRef.current = null;
-    };
-  }, [selectedDocument?.id, editor, userName]);
+  if (!selectedDocument?.id || !editor) return;
+
+  // Disconnect previous provider if any
+  if (providerRef.current) {
+    providerRef.current.disconnect();
+    ydocRef.current.destroy && ydocRef.current.destroy();
+  }
+
+  const ydoc = new Y.Doc();
+  ydocRef.current = ydoc;
+
+  const provider = new WebsocketProvider(
+    "wss://synergy-backend-6nv1.onrender.com/yjs",
+    selectedDocument.id,
+    ydoc
+  );
+  providerRef.current = provider;
+
+  const yXmlFragment = ydoc.getXmlFragment("tiptap");
+
+  // --- REGISTER PLUGINS HERE ---
+  editor.registerPlugin(ySyncPlugin(yXmlFragment));
+  editor.registerPlugin(yCursorPlugin(provider.awareness));
+  editor.registerPlugin(yUndoPlugin());
+  // ----------------------------
+
+  // Load snapshot from Supabase if exists
+  (async () => {
+    const { data } = await supabase
+      .from("documents")
+      .select("snapshot")
+      .eq("id", selectedDocument.id)
+      .single();
+
+    let snapshotUint8 = null;
+    if (data?.snapshot) {
+      if (data.snapshot instanceof Uint8Array) snapshotUint8 = data.snapshot;
+      else if (Array.isArray(data.snapshot)) snapshotUint8 = new Uint8Array(data.snapshot);
+      else if (typeof data.snapshot === "string") {
+        const hex = data.snapshot.startsWith("\\x") ? data.snapshot.slice(2) : data.snapshot;
+        snapshotUint8 = new Uint8Array(hex.match(/.{1,2}/g).map(b => parseInt(b, 16)));
+      }
+      try { Y.applyUpdate(ydoc, snapshotUint8); }
+      catch { if (selectedDocument.content) editor.commands.setContent(selectedDocument.content); }
+    } else if (selectedDocument.content) editor.commands.setContent(selectedDocument.content);
+  })();
+
+  // Awareness
+  const color = getRandomColor();
+  provider.awareness.setLocalStateField("user", { name: userName, color });
+  const updateCollaborators = () => {
+    const users = Array.from(provider.awareness.getStates().values())
+      .map((s) => s.user)
+      .filter(Boolean);
+    setCollaborators(users);
+  };
+  provider.awareness.on("update", updateCollaborators);
+  updateCollaborators();
+
+  return () => {
+    provider.disconnect();
+    ydoc.destroy();
+    providerRef.current = null;
+    ydocRef.current = null;
+  };
+}, [selectedDocument?.id, editor, userName]);
+
 
   // Create new document
   const createDocument = async () => {
