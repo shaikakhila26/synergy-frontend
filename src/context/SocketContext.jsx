@@ -11,10 +11,19 @@ export function SocketProvider({ children }) {
     const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
     console.log('[SocketContext] connecting to BACKEND:', BACKEND);
     const s = io(BACKEND, { 
-      transports: ['websocket', 'polling'],
+      path: '/socket.io/',
+      transports: ['websocket'],
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
+      reconnectionAttempts: 3,
+      timeout: 45000,
+      forceNew: true,
+      withCredentials: true,
+      autoConnect: true,
+      rememberUpgrade: true,
+      secure: true,
+      rejectUnauthorized: false
     });
 
     s.on('connect', () => {
