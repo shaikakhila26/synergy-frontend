@@ -12,11 +12,11 @@ export function SocketProvider({ children }) {
     console.log('[SocketContext] connecting to BACKEND:', BACKEND);
     const s = io(BACKEND, { 
       path: '/socket.io/',
-      transports: ['websocket'],
+      transports: ['polling', 'websocket'], // try polling first so upgrades aren't required
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      reconnectionAttempts: 3,
+      reconnectionAttempts: 6,
       timeout: 45000,
       forceNew: true,
       withCredentials: true,
