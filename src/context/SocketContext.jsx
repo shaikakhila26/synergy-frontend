@@ -9,6 +9,7 @@ export function SocketProvider({ children }) {
 
   useEffect(() => {
     const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+    console.log('[SocketContext] connecting to BACKEND:', BACKEND);
     const s = io(BACKEND, { transports: ['websocket', 'polling'] });
     setSocket(s);
 
